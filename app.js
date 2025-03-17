@@ -3,6 +3,7 @@ const express = require('express');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const path = require('path');
+const os = require('os'); // Import os module to get hostname
 
 // Ensure environment variables are loaded
 if (!process.env.S3_BUCKET_NAME || !process.env.AWS_REGION) {
@@ -24,14 +25,23 @@ app.use(express.static('public'));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Home route
+// Get the instance's hostname
+const hostname = os.hostname();
+
+// Health check route for load balancer
+app.get('/health', (req, res) => {
+  console.log("Health check requested");
+  res.status(200).send('OK');
+});
+
+// Home route with hostname
 app.get('/', (req, res) => {
-  res.render('index');
+  res.render('index', { hostname });
 });
 
 // Upload route
 app.get('/upload', (req, res) => {
-  res.render('upload');
+  res.render('upload', { hostname }); // Pass hostname
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -60,17 +70,17 @@ app.get('/list', async (req, res) => {
     const data = await s3.listObjectsV2(params).promise();
 
     const files = await Promise.all(data.Contents.map(async (file) => {
-      const versions = await s3.listObjectVersions({ 
-        Bucket: process.env.S3_BUCKET_NAME, Prefix: file.Key 
+      const versions = await s3.listObjectVersions({
+        Bucket: process.env.S3_BUCKET_NAME, Prefix: file.Key
       }).promise();
 
-      return { 
-        fileName: file.Key, 
-        versions: versions.Versions || [] 
+      return {
+        fileName: file.Key,
+        versions: versions.Versions || []
       };
     }));
 
-    res.render('list', { files });
+    res.render('list', { files, hostname }); // Pass hostname
   } catch (error) {
     console.error("List Error:", error);
     res.status(500).send('Error listing files.');

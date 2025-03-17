@@ -10,13 +10,38 @@
     body {
       background: url('/images/background.png') no-repeat center center fixed;
       background-size: cover;
+      color: black;
+    }
+    .hostname-box {
+      background-color: white;
+      padding: 10px;
+      border-radius: 8px;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      margin-top: 10px;
+    }
+    .hostname {
+      color: blue;
+      font-weight: bold;
+    }
+    .card {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container text-center">
     <h1 class="my-4">Welcome to File Manager</h1>
-    <div class="card">
+
+    <!-- Hostname Box with White Background -->
+    <div class="hostname-box">
+      <h5 class="text-muted">Served by: <span class="hostname"><%= hostname %></span></h5>
+    </div>
+
+    <div class="card mt-3">
       <h3>Choose an action:</h3>
       <a href="/upload" class="btn btn-primary my-2">Upload a File</a>
       <a href="/list" class="btn btn-success my-2">List Files</a>
