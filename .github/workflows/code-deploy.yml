@@ -1,0 +1,46 @@
+name: "Deploy to EC2"
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  code-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github-code-deploy-role
+          role-session-name: github-actions-session
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Zip Application
+        run: |
+          zip -r deployment.zip . \
+          -x "*.git*" \
+          -x "README.md" \
+          -x ".gitignore" \
+          -x ".github/*"
+
+      - name: Upload to S3
+        run: aws s3 cp deployment.zip s3://${{ vars.S3_CODE_BUCKET }}/deployment.zip
+
+      - name: Create CodeDeploy Deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name S3-node-app-deploy \
+            --deployment-group-name Development-group \
+            --s3-location bucket=${{ vars.S3_CODE_BUCKET }},key=deployment.zip,bundleType=zip

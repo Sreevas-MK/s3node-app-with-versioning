@@ -1,0 +1,15 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/s3-nodejs-app
+hooks:
+  AfterInstall:
+    - location: scripts/fix_permissions.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: scripts/restart_app.sh
+      timeout: 300
+      runas: root
+
