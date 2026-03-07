@@ -40,11 +40,11 @@ jobs:
           -x ".github/*"
 
       - name: Upload to S3
-        run: aws s3 cp deployment.zip s3://${{ vars.S3_CODE_BUCKET }}/$ARTIFACT_NAME
+        run: aws s3 cp $ARTIFACT_NAME s3://${{ vars.S3_CODE_BUCKET }}/$ARTIFACT_NAME
 
       - name: Create CodeDeploy Deployment
         run: |
           aws deploy create-deployment \
             --application-name S3-node-app-deploy \
             --deployment-group-name Development-group \
-            --s3-location bucket=${{ vars.S3_CODE_BUCKET }},key=deployment.zip,bundleType=zip
+            --s3-location bucket=${{ vars.S3_CODE_BUCKET }},key=$ARTIFACT_NAME,bundleType=zip
