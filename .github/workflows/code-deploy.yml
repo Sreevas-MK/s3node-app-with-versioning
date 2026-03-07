@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - '**/*.md'
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -27,16 +28,19 @@ jobs:
           role-session-name: github-actions-session
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Set Artifact Name
+        run: echo "ARTIFACT_NAME=deployment-${{ github.sha }}.zip" >> $GITHUB_ENV
+
       - name: Zip Application
         run: |
-          zip -r deployment.zip . \
+          zip -r $ARTIFACT_NAME . \
           -x "*.git*" \
           -x "README.md" \
           -x ".gitignore" \
           -x ".github/*"
 
       - name: Upload to S3
-        run: aws s3 cp deployment.zip s3://${{ vars.S3_CODE_BUCKET }}/deployment.zip
+        run: aws s3 cp deployment.zip s3://${{ vars.S3_CODE_BUCKET }}/$ARTIFACT_NAME
 
       - name: Create CodeDeploy Deployment
         run: |
