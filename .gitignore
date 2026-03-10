@@ -1,0 +1,16 @@
+node_modules
+bin
+
+*.backup
+*.bak
+*.bk
+
+.env
+npm-debug.log
+
+.DS_Store
+thumbs.db
+
+*.swp
+*.swo
+*.md
