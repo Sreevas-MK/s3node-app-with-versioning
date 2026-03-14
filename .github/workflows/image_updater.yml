@@ -40,7 +40,7 @@ jobs:
 
       - name: Build Image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
           REPO_NAME: ${{ vars.ECR_REPOSITORY_NAME }} 
         run: |
           docker build -t $ECR_REGISTRY/$REPO_NAME:${{ github.sha }} .
@@ -53,7 +53,7 @@ jobs:
 
       - name: Scan Docker image with Trivy
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
           REPO_NAME: ${{ vars.ECR_REPOSITORY_NAME }}
         run: |
           trivy image \
@@ -64,10 +64,33 @@ jobs:
 
       - name: Tag & Push Docker image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
           REPO_NAME: ${{ vars.ECR_REPOSITORY_NAME }}
         run: |
           docker tag $ECR_REGISTRY/$REPO_NAME:${{ github.sha }} $ECR_REGISTRY/$REPO_NAME:latest
           docker push $ECR_REGISTRY/$REPO_NAME:${{ github.sha }}
           docker push $ECR_REGISTRY/$REPO_NAME:latest
 
+      - name: Deploy to ECS (If Service Exists)
+        run: |
+          echo "Checking if ECS Service exists..."
+          
+          # Using the variables we just created in Terraform
+          CLUSTER="${{ vars.CLUSTER_NAME }}"
+          SERVICE="${{ vars.SERVICE_NAME }}"
+          REGION="${{ vars.AWS_REGION }}"
+
+          # Check for the service status
+          SERVICE_STATUS=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" --region "$REGION" --query 'services[0].status' --output text 2>/dev/null)
+
+          if [ "$SERVICE_STATUS" == "ACTIVE" ]; then
+            echo "Service $SERVICE is ACTIVE. Triggering deployment..."
+            aws ecs update-service \
+              --cluster "$CLUSTER" \
+              --service "$SERVICE" \
+              --force-new-deployment \
+              --region "$REGION"
+          else
+            echo "ECS Service $SERVICE not found in $CLUSTER. Skipping deployment."
+            exit 0
+          fi
