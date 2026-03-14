@@ -1,24 +1,25 @@
+# Development junk
 *.bak
+*.backup
 *.bk
-*.md
-
-*.sh
-./scripts
-appspec.yml
-*.md
 *.swp
 *.swo
-
-.git
-.gitignore
-.github
-.env
-
-.DS_Store
-thumbs.db
-
-node_modules
-bin
+node_modules/
 npm-debug.log
 
+# Infrastructure/Deployment files (Specific to your project)
+.git/
+.github/
+.gitignore
+.dockerignore
+scripts/
+appspec.yml
+bin/
 
+# Cloud/Secrets
+.env
+.aws/
+
+# OS Junk
+.DS_Store
+thumbs.db
